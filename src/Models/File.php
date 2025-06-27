@@ -29,7 +29,7 @@ class File extends Model
 
     public function getUrlAttribute(): string
     {
-        return Storage::disk(config('filepond.storage_disk'))->url($this->getCleanPath());
+        return Storage::disk(config('vilt-filepond.storage_disk'))->url($this->getCleanPath());
     }
 
     /**
@@ -48,8 +48,8 @@ class File extends Model
             // Delete the file from storage when the model is deleted
             $cleanPath = $file->getCleanPath();
 
-            if (Storage::disk(config('filepond.storage_disk'))->exists($cleanPath)) {
-                Storage::disk(config('filepond.storage_disk'))->delete($cleanPath);
+            if (Storage::disk(config('vilt-filepond.storage_disk'))->exists($cleanPath)) {
+                Storage::disk(config('vilt-filepond.storage_disk'))->delete($cleanPath);
             }
         });
     }

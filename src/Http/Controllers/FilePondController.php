@@ -17,18 +17,7 @@ class FilePondController extends Controller
 
     public function upload(Request $request)
     {
-        $request->validate([
-            'filepond' => [
-                'required',
-                'file',
-                'max:' . (config('filepond.max_file_size') / 1024), // Convert to KB for validation
-                function ($attribute, $value, $fail) {
-                    if (!in_array($value->getMimeType(), config('filepond.allowed_types'))) {
-                        $fail('The file type is not allowed.');
-                    }
-                },
-            ],
-        ]);
+        $request->validate([ 'filepond' => ['required', 'file'],]);
 
         try {
             $tempFile = $this->filePondService->storeTempFile($request->file('filepond'));
@@ -46,12 +35,5 @@ class FilePondController extends Controller
         } catch (\Exception $e) {
             return response()->json(['error' => 'File deletion failed: ' . $e->getMessage()], 500);
         }
-    }
-
-    public function load(Request $request, string $fileId)
-    {
-        // This method is used for loading existing files in FilePond
-        // You can implement this based on your needs
-        return response()->json(['message' => 'Load method not implemented yet']);
     }
 }

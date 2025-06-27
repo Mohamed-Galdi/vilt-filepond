@@ -14,10 +14,10 @@ class FilePondService
     {
         $folder = uniqid();
         $filename = Str::uuid() . '.' . $file->getClientOriginalExtension();
-        $path = config('filepond.temp_path') . '/' . $folder . '/' . $filename;
+        $path = config('vilt-filepond.temp_path') . '/' . $folder . '/' . $filename;
 
-        Storage::disk(config('filepond.storage_disk'))->putFileAs(
-            config('filepond.temp_path') . '/' . $folder,
+        Storage::disk(config('vilt-filepond.storage_disk'))->putFileAs(
+            config('vilt-filepond.temp_path') . '/' . $folder,
             $file,
             $filename
         );
@@ -43,10 +43,10 @@ class FilePondService
         // Generate new filename with model info
         $modelName = strtolower(class_basename($model));
         $filename = $modelName . '_' . $model->id . '_' . Str::uuid() . '.' . pathinfo($tempFile->filename, PATHINFO_EXTENSION);
-        $newPath = config('filepond.files_path') . '/' . $modelName . '/' . $model->id . '/' . $collection . '/' . $filename;
+        $newPath = config('vilt-filepond.files_path') . '/' . $modelName . '/' . $model->id . '/' . $collection . '/' . $filename;
 
         // Move file to permanent location
-        Storage::disk(config('filepond.storage_disk'))->move($tempFile->path, $newPath);
+        Storage::disk(config('vilt-filepond.storage_disk'))->move($tempFile->path, $newPath);
 
         // Create file record
         $file = $model->files()->create([
@@ -60,8 +60,8 @@ class FilePondService
         ]);
 
         // Delete temp file record and folder
-        Storage::disk(config('filepond.storage_disk'))->deleteDirectory(
-            config('filepond.temp_path') . '/' . $tempFile->folder
+        Storage::disk(config('vilt-filepond.storage_disk'))->deleteDirectory(
+            config('vilt-filepond.temp_path') . '/' . $tempFile->folder
         );
         $tempFile->delete();
 
@@ -73,8 +73,8 @@ class FilePondService
         $tempFile = TempFile::where('folder', $folder)->first();
 
         if ($tempFile) {
-            Storage::disk(config('filepond.storage_disk'))->deleteDirectory(
-                config('filepond.temp_path') . '/' . $tempFile->folder
+            Storage::disk(config('vilt-filepond.storage_disk'))->deleteDirectory(
+                config('vilt-filepond.temp_path') . '/' . $tempFile->folder
             );
             $tempFile->delete();
             return true;

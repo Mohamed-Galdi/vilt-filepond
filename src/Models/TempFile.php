@@ -22,8 +22,8 @@ class TempFile extends Model
 
         static::deleting(function ($tempFile) {
             // Delete the file from storage when the model is deleted
-            if (Storage::disk(config('filepond.storage_disk'))->exists($tempFile->path)) {
-                Storage::disk(config('filepond.storage_disk'))->delete($tempFile->path);
+            if (Storage::disk(config('vilt-filepond.storage_disk'))->exists($tempFile->path)) {
+                Storage::disk(config('vilt-filepond.storage_disk'))->delete($tempFile->path);
             }
         });
     }
