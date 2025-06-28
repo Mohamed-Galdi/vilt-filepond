@@ -1,17 +1,24 @@
-# Laravel FilePond Package
+# Laravel FilePond Package for VILT Stack
 
 A comprehensive Laravel package for handling file uploads using FilePond in VILT (Vue, Inertia, Laravel, Tailwind) stack applications.
 
 ## Features
 
-- 🚀 Easy integration with FilePond
-- 📁 Support for single and multiple file uploads
-- 🔄 Temporary file handling with automatic cleanup
-- 🏷️ File collections for organizing different types of files
-- 📱 Responsive Vue component
-- 🎨 Tailwind CSS styling
-- 🔒 Built-in validation and security
-- 📊 Polymorphic relationships for any model
+- 🚀 **Easy Integration** - Seamless FilePond integration with Laravel
+- 📁 **Flexible Uploads** - Support for single and multiple file uploads
+- 🔄 **Smart Management** - Temporary file handling with automatic cleanup
+- 🏷️ **Collections** - Organize files using collections (images, documents, etc.)
+- 📱 **Responsive Design** - Mobile-friendly Vue component
+- 🎨 **Styled Components** - Pre-styled with Tailwind CSS
+- 🔒 **Security First** - Built-in validation and security features
+- 📊 **Polymorphic Relations** - Works with any Eloquent model
+- 🌐 **Multi-language** - Supports multiple locales (Arabic, French, Spanish, English)
+
+## Requirements
+
+- Laravel 11.0 or higher
+- VILT stack (Vue.js, Inertia.js, Laravel, Tailwind CSS)
+- PHP 8.1 or higher
 
 ## Installation
 
@@ -23,7 +30,7 @@ composer require mohamedgaldi/vilt-filepond
 
 ### 2. Install Frontend Dependencies
 
-```
+```bash
 npm install filepond vue-filepond filepond-plugin-file-validate-type filepond-plugin-file-validate-size filepond-plugin-image-preview
 ```
 
@@ -39,32 +46,52 @@ php artisan vendor:publish --tag=vilt-filepond-migrations
 php artisan vendor:publish --tag=vilt-filepond-vue
 ```
 
-### 4. FilePond Styles
+### 4. Import FilePond Styles
 
-Add those two lines to your **app.css** (or **app.js**) file:
+Add the following imports to your `app.css` file **before** your Tailwind directives:
 
 ```css
 @import "filepond/dist/filepond.min.css";
 @import "filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 ```
 
-### 4. Run Migrations
+⚠️ **Important**: The FilePond CSS imports must come before Tailwind directives to ensure proper styling.
+
+### 5. Run Migrations
 
 ```bash
 php artisan migrate
 ```
 
-### 5. Configure Storage
+### 6. Configure Storage
 
-Make sure your **public** disk is properly configured in **config/filesystems.php** and run:
+Ensure your **public** disk is properly configured in `config/filesystems.php` and create the storage link:
 
 ```bash
 php artisan storage:link
 ```
 
-### 6. Configure CSRF Token and Config Values (Important!)
+### 7. Environment Configuration
 
-Make sure to add the CSRF token and any required config values to the share method of your `HandleInertiaRequests` middleware. This ensures they are available to your frontend via Inertia:
+#### APP_URL Configuration
+
+Ensure your `APP_URL` in `.env` matches your development server URL:
+
+```env
+# ❌ Wrong - will cause image loading issues
+APP_URL=http://localhost
+
+# ✅ Correct - matches your actual server URL
+APP_URL=http://127.0.0.1:8000
+```
+
+### 8. Configure Inertia Middleware
+
+Add the CSRF token and config values to your `HandleInertiaRequests` middleware:
 
 ```php
 // app/Http/Middleware/HandleInertiaRequests.php
@@ -78,13 +105,13 @@ public function share(Request $request): array
             : null,
         'csrf_token' => csrf_token(),
         'fileUploadConfig' => [
-                'locale' => config('vilt-filepond.locale'),
-            ],
+            'locale' => config('vilt-filepond.locale'),
+        ],
     ];
 }
 ```
 
-## Usage
+## Quick Start
 
 ### 1. Prepare Your Model
 
@@ -98,209 +125,166 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use MohamedGaldi\ViltFilepond\Traits\HasFiles;
 
-
-class Post extends Model
+class Product extends Model
 {
     use HasFiles;
 
-    protected $fillable = ['title', 'content'];
+    protected $fillable = ['name', 'description'];
 }
 ```
 
-### 2. Use in Vue Components
+### 2. Create a New Record with Files
 
-Basic Single File Upload
-
-```html
+```vue
 <script setup>
-  import { useForm, router } from "@inertiajs/vue3";
-  import FileUpload from "@/Components/ViltFilePond/FileUpload.vue";
-  import { ref } from "vue";
+import { useForm } from "@inertiajs/vue3";
+import FileUpload from "@/Components/ViltFilePond/FileUpload.vue";
+import { ref } from "vue";
 
-  const props = defineProps({
-    products: Object,
-  });
-
-  const form = useForm({
+const form = useForm({
     name: "",
     images: [],
-  });
+});
 
-  const fileUploadRef = ref(null);
+const fileUploadRef = ref(null);
 
-  function handleSubmit() {
+function handleSubmit() {
     form.post(route("products.store"), {
-      onSuccess: () => {
-        form.reset();
-        // Reset the FileUpload component
-        fileUploadRef.value?.resetFiles();
-      },
+        onSuccess: () => {
+            form.reset();
+            fileUploadRef.value?.resetFiles();
+        },
     });
-  }
-
-  function handleEdit(id) {
-    router.get(route("products.edit", { id: id }));
-  }
-
-  function handleDelete(id) {
-    router.delete(route("products.destroy", { id: id }));
-  }
+}
 </script>
 
 <template>
-  <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 text-2xl">
     <form @submit.prevent="handleSubmit">
-      <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-700">Title</label>
-        <input
-          v-model="form.name"
-          type="text"
-          class="mt-1 block w-full rounded-md border-gray-300"
-        />
-      </div>
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700">Name</label>
+            <input
+                v-model="form.name"
+                type="text"
+                class="mt-1 block w-full rounded-md border-gray-300"
+                required
+            />
+        </div>
 
-      <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-700">Images</label>
-        <FileUpload
-          ref="fileUploadRef"
-          v-model="form.images"
-          :allow-multiple="true"
-          :max-files="5"
-          collection="images"
-        />
-      </div>
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700">Images</label>
+            <FileUpload
+                ref="fileUploadRef"
+                v-model="form.images"
+                :allow-multiple="true"
+                :max-files="5"
+                collection="images"
+            />
+        </div>
 
-      <button
-        type="submit"
-        :disabled="form.processing"
-        class="bg-blue-500 text-white px-4 py-2 rounded"
-      >
-        {{ form.processing ? "Saving..." : "Save Post" }}
-      </button>
+        <button
+            type="submit"
+            :disabled="form.processing"
+            class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50"
+        >
+            {{ form.processing ? "Saving..." : "Create Product" }}
+        </button>
     </form>
-    <div class="grid grid-cols-3 gap-4 my-8">
-      <div
-        v-if="products.length > 0"
-        v-for="product in props.products"
-        class="bg-slate-200 p-2 rounded-md"
-      >
-        <p>{{ product.name }}</p>
-        <div v-for="image in product.files">
-          <img :src="image.url" alt="Image" />
-        </div>
-        <div class="flex justify-end gap-4">
-          <button
-            class="bg-slate-700 hover:bg-yellow-500 text-white p-1 text-sm mt-2 rounded w-1/2"
-            @click="handleEdit(product.id)"
-          >
-            Edit
-          </button>
-          <button
-            class="bg-slate-700 hover:bg-red-500 text-white p-1 text-sm mt-2 rounded w-1/2"
-            @click="handleDelete(product.id)"
-          >
-            Delete
-          </button>
-        </div>
-      </div>
-      <div v-else>
-        <p>No products found</p>
-      </div>
-    </div>
-  </div>
 </template>
 ```
 
-Update page using the composable
+### 3. Update Existing Records
 
-```html
+```vue
 <script setup>
-  import { useForm } from "@inertiajs/vue3";
-  import { watch } from "vue";
-  import FileUpload from "@/Components/ViltFilePond/FileUpload.vue";
-  import { useFilePond } from "@/Composables/ViltFilePond/useFilePond.js";
+import { useForm } from "@inertiajs/vue3";
+import { watch } from "vue";
+import FileUpload from "@/Components/ViltFilePond/FileUpload.vue";
+import { useFilePond } from "@/Composables/ViltFilePond/useFilePond.js";
 
-  const props = defineProps({
+const props = defineProps({
     product: Object,
-  });
+});
 
-  // Initialize file management
-  const {
+// Initialize file management
+const {
     files,
     tempFolders,
     removedFileIds,
     handleFileAdded,
     handleFileRemoved,
     handleError,
-  } = useFilePond(props.product?.files || [], "images");
+} = useFilePond(props.product?.files || [], "images");
 
-  const form = useForm({
+const form = useForm({
     name: props.product?.name || "",
     images_temp_folders: [],
     images_removed_files: [],
-  });
+});
 
-  // Watch for changes and update form reactively
-  watch(
+// Sync file changes with form
+watch(
     [tempFolders, removedFileIds],
     () => {
-      form.images_temp_folders = [...tempFolders.value];
-      form.images_removed_files = [...removedFileIds.value];
+        form.images_temp_folders = [...tempFolders.value];
+        form.images_removed_files = [...removedFileIds.value];
     },
     { deep: true, immediate: true }
-  );
+);
 
-  function handleSubmit() {
+function handleSubmit() {
     form.put(route("products.update", props.product.id));
-  }
+}
 </script>
 
 <template>
-  <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 text-2xl">
     <form @submit.prevent="handleSubmit">
-      <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-700">Name</label>
-        <input
-          v-model="form.name"
-          type="text"
-          class="mt-1 block w-full rounded-md border-gray-300"
-        />
-      </div>
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700">Name</label>
+            <input
+                v-model="form.name"
+                type="text"
+                class="mt-1 block w-full rounded-md border-gray-300"
+                required
+            />
+        </div>
 
-      <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-700">Images</label>
-        <FileUpload
-          v-model="tempFolders"
-          :initial-files="files"
-          :allow-multiple="true"
-          :max-files="5"
-          collection="images"
-          @file-added="handleFileAdded"
-          @file-removed="handleFileRemoved"
-          @error="handleError"
-        />
-      </div>
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700">Images</label>
+            <FileUpload
+                v-model="tempFolders"
+                :initial-files="files"
+                :allow-multiple="true"
+                :max-files="5"
+                collection="images"
+                @file-added="handleFileAdded"
+                @file-removed="handleFileRemoved"
+                @error="handleError"
+            />
+        </div>
 
-      <button type="submit" :disabled="form.processing">
-        {{ form.processing ? "Saving..." : "Save product" }}
-      </button>
+        <button
+            type="submit"
+            :disabled="form.processing"
+            class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50"
+        >
+            {{ form.processing ? "Updating..." : "Update Product" }}
+        </button>
     </form>
-  </div>
 </template>
 ```
 
-### 3. Handle in Controller
+### 4. Handle Files in Controller
 
 ```php
 <?php
 
 namespace App\Http\Controllers;
 
-use App\Models\Post;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use MohamedGaldi\ViltFilepond\Services\FilePondService;
 
-class PostController extends Controller
+class ProductController extends Controller
 {
     protected FilePondService $filePondService;
 
@@ -312,91 +296,182 @@ class PostController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'title' => 'required|string|max:255',
-            'content' => 'required|string',
+            'name' => 'required|string|max:255',
             'images' => 'array',
-            'images.*' => 'string', // These are temp folder names
+            'images.*' => 'string',
         ]);
 
-        $post = Post::create($request->only(['title', 'content']));
+        $product = Product::create($request->only(['name']));
 
         // Handle file uploads
         if ($request->has('images') && !empty($request->images)) {
-            $this->filePondService->handleFileUploads($post, $request->images, 'images');
+            $this->filePondService->handleFileUploads(
+                $product, 
+                $request->images, 
+                'images'
+            );
         }
 
-        return redirect()->route('posts.index')->with('success', 'Post created successfully!');
+        return redirect()
+            ->route('products.index')
+            ->with('success', 'Product created successfully!');
     }
 
-    public function update(Request $request, Post $post)
+    public function update(Request $request, Product $product)
     {
         $request->validate([
-            'title' => 'required|string|max:255',
-            'content' => 'required|string',
+            'name' => 'required|string|max:255',
             'images_temp_folders' => 'array',
             'images_removed_files' => 'array',
         ]);
 
-        $post->update($request->only(['title', 'content']));
+        $product->update($request->only(['name']));
 
         // Handle file updates
         $this->filePondService->handleFileUpdates(
-            $post,
+            $product,
             $request->input('images_temp_folders', []),
             $request->input('images_removed_files', []),
             'images'
         );
 
-        return redirect()->route('posts.index')->with('success', 'Post updated successfully!');
-    }
-
-    public function show(Post $post)
-    {
-        $post->load('files');
-
-        return inertia('Posts/Show', [
-            'post' => $post
-        ]);
+        return redirect()
+            ->route('products.index')
+            ->with('success', 'Product updated successfully!');
     }
 }
 ```
 
+## Component Props
+
+### FileUpload Component
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `modelValue` | Array | `[]` | Array of temporary folder names |
+| `initialFiles` | Array | `[]` | Array of existing files to display |
+| `allowedFileTypes` | Array | Image types | Accepted MIME types |
+| `allowMultiple` | Boolean | `false` | Allow multiple file uploads |
+| `maxFiles` | Number | `1` | Maximum number of files |
+| `maxFileSize` | String | `"10MB"` | Maximum file size |
+| `collection` | String | `"default"` | File collection name |
+| `disabled` | Boolean | `false` | Disable the component |
+| `required` | Boolean | `false` | Mark as required field |
+
+### Events
+
+| Event | Payload | Description |
+| --- | --- | --- |
+| `@file-added` | `{ folder, file }` | Fired when a file is uploaded |
+| `@file-removed` | `{ fileId, type, file }` | Fired when a file is removed |
+| `@error` | `error` | Fired when an error occurs |
+
+## useFilePond Composable
+
+The composable provides reactive state management for file operations:
+
+```javascript
+const {
+    // State
+    files,              // Existing files
+    tempFolders,        // Temporary uploaded files
+    removedFileIds,     // IDs of removed files
+    errors,             // Error messages
+    isSubmitting,       // Submission status
+
+    // Computed
+    hasFiles,           // Whether there are any files
+    totalFiles,         // Total file count
+    hasChanges,         // Whether there are pending changes
+    hasErrors,          // Whether there are errors
+
+    // Methods
+    handleFileAdded,    // Handle file addition
+    handleFileRemoved,  // Handle file removal
+    handleError,        // Handle errors
+    resetState,         // Reset all state
+    submitFiles,        // Submit files to server
+} = useFilePond(initialFiles, collection);
+```
+
 ## Configuration
 
-You can customize the package behavior by modifying the published config file at config/filepond.php:
+Customize the package behavior in `config/vilt-filepond.php`:
 
 ```php
 return [
-    'storage_disk' => 'public',
+    // Storage configuration
+    'storage_disk' => env('FILEPOND_STORAGE_DISK', 'public'),
     'temp_path' => 'temp-files',
     'files_path' => 'files',
+
+    // File validation
     'allowed_types' => [
         'image/jpeg',
         'image/png',
         'image/gif',
-        // Add more types...
+        'image/svg+xml',
+        'image/webp',
+        'image/avif',
     ],
     'max_file_size' => 10 * 1024 * 1024, // 10MB
+
+    // Localization
+    'locale' => env('FILEPOND_LOCALE', null), // null = English
+
+    // Cleanup settings
+    'cleanup_temp_files' => true,
+    'temp_file_lifetime' => 24, // hours
 ];
 ```
 
 ## API Reference
 
-### `HasFiles` Trait Methods
+### HasFiles Trait Methods
 
-- `files()` - Get all files relationship
-- `getFilesByCollection(string $collection)` - Get files by collection
-- `getFirstFile(string $collection)` - Get first file from collection
-- `hasFiles(string $collection)` - Check if model has files in collection
-- `deleteFiles(string $collection)` - Delete all files in collection
+| Method | Description |
+| --- | --- |
+| `files()` | Get all files relationship |
+| `getFilesByCollection(string $collection)` | Get files by collection |
+| `getFirstFile(string $collection = 'default')` | Get first file from collection |
+| `hasFiles(string $collection = null)` | Check if model has files |
+| `deleteFiles(string $collection = null)` | Delete files by collection |
 
 ### FilePondService Methods
 
-- `storeTempFile(UploadedFile $file)` - Store temporary file
-- `moveTempFileToModel($model, string $folder, string $collection, int $order)` - Move temp file to model
-- `handleFileUploads($model, array $tempFolders, string $collection)` - Handle multiple file uploads
-- `handleFileUpdates($model, array $tempFolders, array $removedFiles, string $collection)` - Handle file updates
+| Method | Description |
+| --- | --- |
+| `storeTempFile(UploadedFile $file, string $collection)` | Store temporary file |
+| `moveTempFileToModel($model, string $folder, string $collection, int $order)` | Move temp file to model |
+| `handleFileUploads($model, array $tempFolders, string $collection)` | Handle multiple uploads |
+| `handleFileUpdates($model, array $tempFolders, array $removedFiles, string $collection)` | Handle file updates |
+| `cleanupTempFiles()` | Clean up old temporary files |
 
-# License
+## Troubleshooting
 
-This package is open-sourced software licensed under the MIT license.
+### Common Issues
+
+1. **Images not loading**: Check your `APP_URL` in `.env` matches your server URL
+2. **Styles not working**: Ensure FilePond CSS is imported before Tailwind
+3. **Upload failures**: Verify CSRF token is shared via Inertia middleware
+4. **Permission errors**: Run `php artisan storage:link` and check file permissions
+
+### Debug Mode
+
+Enable debug mode in your config file to get detailed error information:
+
+```php
+'debug' => env('FILEPOND_DEBUG', false),
+```
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+This package is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+---
+
+**Made with ❤️ for the VILT Stack community**
