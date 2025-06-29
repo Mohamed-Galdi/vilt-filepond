@@ -456,14 +456,6 @@ return [
 3. **Upload failures**: Verify CSRF token is shared via Inertia middleware
 4. **Permission errors**: Run `php artisan storage:link` and check file permissions
 
-### Debug Mode
-
-Enable debug mode in your config file to get detailed error information:
-
-```php
-'debug' => env('FILEPOND_DEBUG', false),
-```
-
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
