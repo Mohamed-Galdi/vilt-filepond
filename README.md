@@ -197,23 +197,16 @@ function handleSubmit() {
 ```vue
 <script setup>
 import { useForm } from "@inertiajs/vue3";
-import { watch } from "vue";
+import { ref, watch } from "vue";
 import FileUpload from "@/Components/ViltFilePond/FileUpload.vue";
-import { useFilePond } from "@/Composables/ViltFilePond/useFilePond.js";
 
 const props = defineProps({
     product: Object,
 });
 
-// Initialize file management
-const {
-    files,
-    tempFolders,
-    removedFileIds,
-    handleFileAdded,
-    handleFileRemoved,
-    handleError,
-} = useFilePond(props.product?.files || [], "images");
+// State management
+const tempFolders = ref([]);
+const removedFileIds = ref([]);
 
 const form = useForm({
     name: props.product?.name || "",
@@ -221,15 +214,22 @@ const form = useForm({
     images_removed_files: [],
 });
 
-// Sync file changes with form
+// Sync temp folders with form
 watch(
-    [tempFolders, removedFileIds],
-    () => {
-        form.images_temp_folders = [...tempFolders.value];
-        form.images_removed_files = [...removedFileIds.value];
+    tempFolders,
+    (newValue) => {
+        form.images_temp_folders = [...newValue];
     },
-    { deep: true, immediate: true }
+    { deep: true }
 );
+
+// Handle file removal
+function handleFileRemoved(data) {
+    if (data.type === "existing" && data.fileId) {
+        removedFileIds.value.push(data.fileId);
+        form.images_removed_files = [...removedFileIds.value];
+    }
+}
 
 function handleSubmit() {
     form.put(route("products.update", props.product.id));
@@ -237,39 +237,39 @@ function handleSubmit() {
 </script>
 
 <template>
-    <form @submit.prevent="handleSubmit">
-        <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700">Name</label>
-            <input
-                v-model="form.name"
-                type="text"
-                class="mt-1 block w-full rounded-md border-gray-300"
-                required
-            />
-        </div>
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 text-2xl">
+        <form @submit.prevent="handleSubmit">
+            <div class="mb-4">
+                <label>Name</label>
+                <input
+                    v-model="form.name"
+                    type="text"
+                    class="mt-1 block w-full rounded-md border-gray-300"
+                />
+            </div>
 
-        <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700">Images</label>
-            <FileUpload
-                v-model="tempFolders"
-                :initial-files="files"
-                :allow-multiple="true"
-                :max-files="5"
-                collection="images"
-                @file-added="handleFileAdded"
-                @file-removed="handleFileRemoved"
-                @error="handleError"
-            />
-        </div>
+            <div class="mb-4">
+                <label>Images</label>
+                <FileUpload
+                    v-model="tempFolders"
+                    :initial-files="product?.files || []"
+                    :allow-multiple="true"
+                    :max-files="5"
+                    collection="images"
+                    @file-removed="handleFileRemoved"
+                />
+            </div>
 
-        <button
-            type="submit"
-            :disabled="form.processing"
-            class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50"
-        >
+            
+            <button
+                type="submit"
+                :disabled="form.processing"
+                class="bg-blue-500 text-white px-4 py-2 rounded"
+            >
             {{ form.processing ? "Updating..." : "Update Product" }}
-        </button>
-    </form>
+            </button>
+        </form>
+    </div>
 </template>
 ```
 

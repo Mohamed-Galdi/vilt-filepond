@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, watch, nextTick } from "vue";
+import { ref, onMounted, watch, computed } from "vue";
 import vueFilePond from "vue-filepond";
 import FilePondPluginFileValidateType from "filepond-plugin-file-validate-type";
 import FilePondPluginFileValidateSize from "filepond-plugin-file-validate-size";
@@ -69,7 +69,6 @@ const emit = defineEmits([
 const page = usePage();
 const files = ref([]);
 const tempFolders = ref([]);
-const isUpdating = ref(false);
 const filePondRef = ref(null);
 
 // Locale configuration
@@ -95,19 +94,6 @@ function initializeLocale() {
   if (localeOptions) {
     setOptions(localeOptions);
   }
-}
-
-// Update model value with proper change detection
-function updateModelValue(newValue) {
-  if (isUpdating.value) return;
-
-  isUpdating.value = true;
-  nextTick(() => {
-    emit("update:modelValue", [...newValue]);
-    nextTick(() => {
-      isUpdating.value = false;
-    });
-  });
 }
 
 // Handle file upload process
@@ -177,17 +163,9 @@ function parseUploadResponse(responseText) {
 
 // Add temporary folder to state
 function addTempFolder(folder, file) {
-  isUpdating.value = true;
   tempFolders.value.push(folder);
-
-  nextTick(() => {
-    emit("fileAdded", { folder, file });
-    emit("update:modelValue", [...tempFolders.value]);
-
-    nextTick(() => {
-      isUpdating.value = false;
-    });
-  });
+  emit("fileAdded", { folder, file });
+  emit("update:modelValue", [...tempFolders.value]);
 }
 
 // Handle file revert (removal of temporary files)
@@ -198,19 +176,14 @@ function handleRevert(uniqueId, load, error) {
   }
 
   const index = tempFolders.value.indexOf(uniqueId);
-
-  if (index > -1) {
-    isUpdating.value = true;
-    tempFolders.value.splice(index, 1);
-
-    nextTick(() => {
-      emit("update:modelValue", [...tempFolders.value]);
-
-      nextTick(() => {
-        isUpdating.value = false;
-      });
-    });
+  if (index === -1) {
+    error("File not found");
+    return;
   }
+
+  // Optimistically remove from UI
+  tempFolders.value.splice(index, 1);
+  emit("update:modelValue", [...tempFolders.value]);
 
   // Send delete request to server
   fetch(route("filepond.revert", { folder: uniqueId }), {
@@ -218,7 +191,6 @@ function handleRevert(uniqueId, load, error) {
     headers: {
       "X-CSRF-TOKEN": page.props.csrf_token,
       Accept: "application/json",
-      "Content-Type": "application/json",
     },
   })
     .then((response) => {
@@ -227,31 +199,17 @@ function handleRevert(uniqueId, load, error) {
         load();
       } else {
         // Restore folder on server error
-        restoreTempFolder(uniqueId, index);
+        tempFolders.value.splice(index, 0, uniqueId);
+        emit("update:modelValue", [...tempFolders.value]);
         error("Failed to delete file from server");
       }
     })
     .catch(() => {
       // Restore folder on network error
-      restoreTempFolder(uniqueId, index);
+      tempFolders.value.splice(index, 0, uniqueId);
+      emit("update:modelValue", [...tempFolders.value]);
       error("Failed to delete file");
     });
-}
-
-// Restore temporary folder on revert failure
-function restoreTempFolder(uniqueId, index) {
-  if (index > -1) {
-    isUpdating.value = true;
-    tempFolders.value.splice(index, 0, uniqueId);
-
-    nextTick(() => {
-      emit("update:modelValue", [...tempFolders.value]);
-
-      nextTick(() => {
-        isUpdating.value = false;
-      });
-    });
-  }
 }
 
 // Handle removal of existing files
@@ -296,8 +254,8 @@ const serverOptions = {
   },
 };
 
-// FilePond component options
-const filePondOptions = {
+// FilePond component options - made reactive with computed
+const filePondOptions = computed(() => ({
   server: serverOptions,
   allowMultiple: props.allowMultiple,
   acceptedFileTypes: props.allowedFileTypes,
@@ -306,35 +264,16 @@ const filePondOptions = {
   credits: "none",
   disabled: props.disabled,
   required: props.required,
-};
+}));
 
-// Watch for external modelValue changes
+// Watch for external modelValue changes - simplified
 watch(
   () => props.modelValue,
   (newValue) => {
-    if (isUpdating.value) return;
-
     const currentValue = tempFolders.value;
     if (JSON.stringify(newValue) !== JSON.stringify(currentValue)) {
       tempFolders.value = [...(newValue || [])];
     }
-  },
-  { deep: true }
-);
-
-// Watch for internal tempFolders changes and emit updates
-watch(
-  tempFolders,
-  (newValue) => {
-    if (isUpdating.value) return;
-
-    isUpdating.value = true;
-    nextTick(() => {
-      emit("update:modelValue", [...newValue]);
-      nextTick(() => {
-        isUpdating.value = false;
-      });
-    });
   },
   { deep: true }
 );
@@ -344,12 +283,12 @@ onMounted(() => {
   initializeLocale();
 
   // Initialize modelValue
-  if (props.modelValue && props.modelValue.length > 0) {
+  if (props.modelValue?.length > 0) {
     tempFolders.value = [...props.modelValue];
   }
 
   // Initialize initial files
-  if (props.initialFiles && props.initialFiles.length > 0) {
+  if (props.initialFiles?.length > 0) {
     files.value = props.initialFiles.map((file) => ({
       source: file.url,
       options: { type: "local" },
@@ -380,6 +319,40 @@ defineExpose({
     />
   </div>
 </template>
+
+<style scoped>
+.filepond-wrapper {
+  @apply w-full;
+}
+
+:deep(.filepond--root) {
+  @apply font-sans;
+}
+
+:deep(.filepond--panel-root) {
+  @apply bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg;
+}
+
+:deep(.filepond--drop-label) {
+  @apply text-gray-600;
+}
+
+:deep(.filepond--label-action) {
+  @apply text-blue-600 hover:text-blue-700 underline;
+}
+
+:deep(.filepond--item-panel) {
+  @apply bg-white border border-gray-200 rounded-lg;
+}
+
+:deep(.filepond--file-status-main) {
+  @apply text-gray-700;
+}
+
+:deep(.filepond--file-status-sub) {
+  @apply text-gray-500;
+}
+</style>
 
 <style scoped>
 .filepond-wrapper {

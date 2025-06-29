@@ -20,10 +20,9 @@ class ViltFilePondServiceProvider extends ServiceProvider
             __DIR__ . '/../config/vilt-filepond.php' => config_path('vilt-filepond.php'),
         ], ['vilt-filepond-config', 'vilt-filepond']);
         
-        // Publish Vue components and composables together
+        // Publish Vue components
         $this->publishes([
             __DIR__ . '/resources/js/components' => resource_path('js/Components/ViltFilePond'),
-            __DIR__ . '/resources/js/composables' => resource_path('js/Composables/ViltFilePond'),
         ], ['vilt-filepond-vue', 'vilt-filepond']);
 
         // Publish migrations
