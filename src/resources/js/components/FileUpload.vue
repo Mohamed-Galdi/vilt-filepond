@@ -115,19 +115,12 @@ const chunkFileSize =
 
 // Parse upload response (handles both JSON and plain text)
 function parseUploadResponse(responseText) {
-    console.log(
-        "parseUploadResponse input:",
-        responseText,
-        typeof responseText
-    );
-
     // Check if it's an XMLHttpRequest object and extract responseText
     if (
         responseText &&
         typeof responseText === "object" &&
         responseText.responseText !== undefined
     ) {
-        console.log("Extracting responseText from XMLHttpRequest");
         responseText = responseText.responseText;
     }
 
@@ -264,8 +257,6 @@ const serverOptions = {
             return formData;
         },
         onload: (response) => {
-            console.log("Process onload response:", response, typeof response);
-
             // Extract response text from XMLHttpRequest object
             let responseText = response;
             if (
@@ -277,8 +268,6 @@ const serverOptions = {
             }
 
             const result = parseUploadResponse(responseText);
-            console.log("Parsed result:", result);
-
             if (result) {
                 addTempFolder(result, null);
             }
@@ -295,8 +284,6 @@ const serverOptions = {
             "X-CSRF-TOKEN": page.props.csrf_token,
         },
         onload: (response) => {
-            console.log("Patch onload response:", response, typeof response);
-
             // Extract response text from XMLHttpRequest object
             let responseText = response;
             if (
@@ -305,7 +292,6 @@ const serverOptions = {
                 response.responseText !== undefined
             ) {
                 responseText = response.responseText;
-                console.log("Extracted responseText:", responseText);
             }
 
             // For chunk uploads, response might be empty for intermediate chunks
@@ -318,7 +304,6 @@ const serverOptions = {
             }
 
             const result = parseUploadResponse(responseText);
-            console.log("Patch parsed result:", result);
 
             if (result && result !== "null") {
                 addTempFolder(result, null);
