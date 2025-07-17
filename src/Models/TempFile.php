@@ -13,7 +13,12 @@ class TempFile extends Model
         'path',
         'mime_type',
         'size',
-        'folder'
+        'folder',
+        'is_chunked',
+    ];
+
+    protected $casts = [
+        'is_chunked' => 'boolean',
     ];
 
     protected static function boot()

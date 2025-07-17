@@ -106,6 +106,7 @@ public function share(Request $request): array
         'csrf_token' => csrf_token(),
         'fileUploadConfig' => [
             'locale' => config('vilt-filepond.locale'),
+            'chunkSize' => config('vilt-filepond.chunk_size'),
         ],
     ];
 }

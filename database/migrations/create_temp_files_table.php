@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('mime_type');
             $table->unsignedBigInteger('size');
             $table->string('folder');
+            $table->boolean('is_chunked')->default(false);
             $table->timestamps();
         });
     }
