@@ -51,7 +51,7 @@ php artisan vendor:publish --tag=vilt-filepond-vue
 Add the following imports to your `app.css` file **before** your Tailwind directives:
 
 ```css
-@import " filepond/dist/filepond.min.css";
+@import "filepond/dist/filepond.min.css";
 @import "filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css";
 
 @tailwind base;
