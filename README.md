@@ -5,14 +5,14 @@ A comprehensive Laravel package for handling file uploads using FilePond in VILT
 ## Features
 
 - 🚀 **Easy Integration** - Seamless FilePond integration with Laravel
-- 📁 **Flexible Uploads** - Support for single and multiple file uploads
-- 🔄 **Smart Management** - Temporary file handling with automatic cleanup
-- 🏷️ **Collections** - Organize files using collections (images, documents, etc.)
-- 📱 **Responsive Design** - Mobile-friendly Vue component
-- 🎨 **Styled Components** - Pre-styled with Tailwind CSS
-- 🔒 **Security First** - Built-in validation and security features
 - 📊 **Polymorphic Relations** - Works with any Eloquent model
+- 💾 **Chunked Uploads** - Support for large file uploads via chunking
+- 🔄 **Smart Management** - Temporary file handling with automatic cleanup
+- 📁 **Flexible Uploads** - Support for single and multiple file uploads
+- 🏷️ **Collections** - Organize files using collections (images, documents, etc.)
 - 🌐 **Multi-language** - Supports multiple locales (Arabic, French, Spanish, English)
+- 🌗 **Light/Dark Mode** - Customizable theme with light and dark mode support
+- 🔒 **Security First** - Built-in validation and security features
 
 ## Requirements
 
@@ -51,7 +51,7 @@ php artisan vendor:publish --tag=vilt-filepond-vue
 Add the following imports to your `app.css` file **before** your Tailwind directives:
 
 ```css
-@import "filepond/dist/filepond.min.css";
+@import " filepond/dist/filepond.min.css";
 @import "filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css";
 
 @tailwind base;
@@ -160,6 +160,7 @@ function handleSubmit() {
 </script>
 
 <template>
+    Packed
     <form @submit.prevent="handleSubmit">
         <div class="mb-4">
             <label class="block text-sm font-medium text-gray-700">Name</label>
@@ -179,6 +180,8 @@ function handleSubmit() {
                 :allow-multiple="true"
                 :max-files="5"
                 collection="images"
+                theme="light"
+                width="40rem"
             />
         </div>
 
@@ -257,11 +260,12 @@ function handleSubmit() {
                     :allow-multiple="true"
                     :max-files="5"
                     collection="images"
+                    theme="light"
+                    width="40rem"
                     @file-removed="handleFileRemoved"
                 />
             </div>
 
-            
             <button
                 type="submit"
                 :disabled="form.processing"
@@ -358,6 +362,8 @@ class ProductController extends Controller
 | `collection` | String | `"default"` | File collection name |
 | `disabled` | Boolean | `false` | Disable the component |
 | `required` | Boolean | `false` | Mark as required field |
+| `theme` | String | `"light"` | Theme for the component (light or dark) |
+| `width` | String | `"auto"` | Custom width for the component (e.g., "40rem") |
 
 ### Events
 
@@ -367,62 +373,37 @@ class ProductController extends Controller
 | `@file-removed` | `{ fileId, type, file }` | Fired when a file is removed |
 | `@error` | `error` | Fired when an error occurs |
 
-## useFilePond Composable
-
-The composable provides reactive state management for file operations:
-
-```javascript
-const {
-    // State
-    files,              // Existing files
-    tempFolders,        // Temporary uploaded files
-    removedFileIds,     // IDs of removed files
-    errors,             // Error messages
-    isSubmitting,       // Submission status
-
-    // Computed
-    hasFiles,           // Whether there are any files
-    totalFiles,         // Total file count
-    hasChanges,         // Whether there are pending changes
-    hasErrors,          // Whether there are errors
-
-    // Methods
-    handleFileAdded,    // Handle file addition
-    handleFileRemoved,  // Handle file removal
-    handleError,        // Handle errors
-    resetState,         // Reset all state
-    submitFiles,        // Submit files to server
-} = useFilePond(initialFiles, collection);
-```
 
 ## Configuration
 
 Customize the package behavior in `config/vilt-filepond.php`:
 
 ```php
+<?php
+
 return [
-    // Storage configuration
-    'storage_disk' => env('FILEPOND_STORAGE_DISK', 'public'),
+    
+    // The disk where files will be stored permanently
+    'storage_disk' => 'public',
+
+    // path where temporary files are stored before being moved to permanent location
     'temp_path' => 'temp-files',
+    
+    // Base path where permanent files are stored
     'files_path' => 'files',
-
-    // File validation
-    'allowed_types' => [
-        'image/jpeg',
-        'image/png',
-        'image/gif',
-        'image/svg+xml',
-        'image/webp',
-        'image/avif',
+    
+    // Files larger than this size (in bytes) will be uploaded in chunks.
+    'chunk_size' => 10 * 1024 * 1024, // 10MB
+    
+    // Configure the FilePond locale. Set to null for English (default).
+    // Supported locales: 'ar', 'fr', 'es', null (English)
+    'locale' => null,
+    
+    // Configuration for the package routes
+    'routes' => [
+        'prefix' => 'filepond',
+        'middleware' => ['web'],
     ],
-    'max_file_size' => 10 * 1024 * 1024, // 10MB
-
-    // Localization
-    'locale' => env('FILEPOND_LOCALE', null), // null = English
-
-    // Cleanup settings
-    'cleanup_temp_files' => true,
-    'temp_file_lifetime' => 24, // hours
 ];
 ```
 

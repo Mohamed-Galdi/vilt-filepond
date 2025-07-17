@@ -13,7 +13,7 @@ return new class extends Migration
             $table->string('original_name');
             $table->string('filename');
             $table->string('path');
-            $table->string('mime_type');
+            $table->string('mime_type')->nullable();
             $table->unsignedBigInteger('size');
             $table->morphs('fileable'); // This creates fileable_type and fileable_id
             $table->string('collection')->default('default'); // For categorizing files

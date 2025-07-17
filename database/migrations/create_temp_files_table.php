@@ -13,7 +13,7 @@ return new class extends Migration
             $table->string('original_name');
             $table->string('filename');
             $table->string('path');
-            $table->string('mime_type');
+            $table->string('mime_type')->nullable();
             $table->unsignedBigInteger('size');
             $table->string('folder');
             $table->boolean('is_chunked')->default(false);

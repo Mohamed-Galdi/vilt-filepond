@@ -56,6 +56,15 @@ const props = defineProps({
         type: Boolean,
         default: false,
     },
+    theme: {
+        type: String,
+        default: "light",
+        validator: (value) => ["light", "dark"].includes(value),
+    },
+    width: {
+        type: String,
+        default: "100%",
+    },
 });
 
 const emit = defineEmits([
@@ -70,6 +79,10 @@ const page = usePage();
 const files = ref([]);
 const tempFolders = ref([]);
 const filePondRef = ref(null);
+
+const wrapperStyle = computed(() => ({
+    width: props.width,
+}));
 
 // Locale configuration
 const LOCALE_MAP = {
@@ -380,7 +393,11 @@ defineExpose({
 </script>
 
 <template>
-    <div class="filepond-wrapper">
+    <div
+        class="filepond-wrapper"
+        :class="{ 'filepond-dark': theme === 'dark' }"
+        :style="wrapperStyle"
+    >
         <FilePond
             ref="filePondRef"
             v-model="files"
@@ -398,34 +415,81 @@ defineExpose({
 </template>
 <style scoped>
 .filepond-wrapper {
-  @apply w-full;
+    @apply w-full;
 }
 
+/* Light theme */
 :deep(.filepond--root) {
-  @apply font-sans;
+    @apply font-sans;
 }
 
 :deep(.filepond--panel-root) {
-  @apply bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg;
+    @apply bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg;
 }
 
 :deep(.filepond--drop-label) {
-  @apply text-gray-600;
-}
-
-:deep(.filepond--label-action) {
-  @apply text-blue-600 hover:text-blue-700 underline;
+    @apply text-gray-600;
 }
 
 :deep(.filepond--item-panel) {
-  @apply bg-white border border-gray-200 rounded-lg;
+    @apply bg-white border border-gray-200 rounded-lg;
 }
 
-:deep(.filepond--file-status-main) {
-  @apply text-gray-700;
+:deep(.filepond--file-status-main),
+:deep(.filepond--file-info-main) {
+    @apply text-gray-800;
 }
 
-:deep(.filepond--file-status-sub) {
-  @apply text-gray-500;
+:deep(.filepond--file-status-sub),
+:deep(.filepond--file-info-sub) {
+    @apply text-gray-600;
+}
+
+/* Force white text for image previews - when image-preview-wrapper exists */
+:deep(
+        .filepond--file:has(.filepond--image-preview-wrapper)
+            .filepond--file-status-main
+    ),
+:deep(
+        .filepond--file:has(.filepond--image-preview-wrapper)
+            .filepond--file-info-main
+    ) {
+    @apply text-white !important;
+}
+
+:deep(
+        .filepond--file:has(.filepond--image-preview-wrapper)
+            .filepond--file-status-sub
+    ),
+:deep(
+        .filepond--file:has(.filepond--image-preview-wrapper)
+            .filepond--file-info-sub
+    ) {
+    @apply text-gray-200 !important;
+}
+
+/* Dark theme */
+.filepond-dark {
+    :deep(.filepond--panel-root) {
+        @apply bg-gray-800 border-gray-600;
+    }
+
+    :deep(.filepond--drop-label) {
+        @apply text-gray-300;
+    }
+
+    :deep(.filepond--item-panel) {
+        @apply bg-gray-700 border-gray-600;
+    }
+
+    :deep(.filepond--file-status-main),
+    :deep(.filepond--file-info-main) {
+        @apply text-gray-100;
+    }
+
+    :deep(.filepond--file-status-sub),
+    :deep(.filepond--file-info-sub) {
+        @apply text-gray-300;
+    }
 }
 </style>
